@@ -435,7 +435,7 @@ export function ChatInterface({ currentAssistant }: ChatInterfaceProps) {
                 variant="ghost"
                 size="icon"
               >
-                {message.trim() ? <Send className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                <Send className="h-5 w-5" />
               </Button>
             </div>
 
