@@ -1,6 +1,7 @@
 import { type Message } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
+
 interface StreamingMessageProps {
     message: Message;
     showThinking: boolean;

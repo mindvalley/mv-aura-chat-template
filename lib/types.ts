@@ -13,6 +13,7 @@ export interface Message {
   thinkingStartTime?: Date;
   thinkingDuration?: number; // in seconds
   thinkingApiLimited?: boolean; // true if model thinks but API doesn't expose content
+
 }
 
 export interface ThinkingModeState {

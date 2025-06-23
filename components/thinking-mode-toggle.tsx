@@ -8,6 +8,7 @@ interface ThinkingModeToggleProps {
     onToggle: (enabled: boolean) => void;
     className?: string;
     textClassName?: string;
+
 }
 
 export function ThinkingModeToggle({

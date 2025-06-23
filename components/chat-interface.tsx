@@ -27,6 +27,7 @@ import { type Model as AIModel, models } from "@/lib/models"
 import { ThinkingModeToggle } from "@/components/thinking-mode-toggle"
 import { StreamingMessage } from "@/components/streaming-message"
 import { ThinkingContainer } from "@/components/thinking-container"
+
 import { useThinkingMode } from "@/hooks/use-thinking-mode"
 import { type Message, type Assistant, type ModelCapability } from "@/lib/types"
 
@@ -597,6 +598,7 @@ This appears to be a request that I should handle with care and attention to det
                         className={cn(
                           "rounded-full h-8 px-2 flex items-center gap-1.5",
                           open ? "lg:px-3" : "md:px-3",
+
                           selectedTool === "kb-search" ? "bg-primary text-primary-foreground" : "",
                         )}
                         onClick={() => handleToolSelect("kb-search")}
