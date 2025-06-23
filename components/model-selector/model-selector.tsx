@@ -158,8 +158,11 @@ export function ModelSelector({ selectedModel, onModelChange, isInputAtBottom, i
             {open && hoveredModel && (
                 <div className={cn(
                     "absolute left-full ml-[100px] animate-in slide-in-from-right-2 duration-200 z-10",
-                    { "bottom-0": isInputAtBottom },
-                    { "top-4": isInputAtCenter && !isInputAtBottom }
+                    // Use top positioning for both scenarios, but adjust based on available space
+                    // When input is at bottom (has messages), position from top but ensure it fits in viewport
+                    isInputAtBottom ? "top-4 max-h-[calc(100vh-8rem)]" : "top-4",
+                    // Add overflow handling to prevent card from being cut off
+                    "overflow-visible"
                 )}>
                     <ModelCard model={hoveredModel} />
                 </div>
