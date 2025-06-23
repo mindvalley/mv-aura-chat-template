@@ -78,9 +78,9 @@ export function ThinkingContainer({ message }: ThinkingContainerProps) {
                                                             {message.thinkingDuration}s
                                                         </span>
                                                     )}
-                                                    {message.thinkingApiLimited && (
+                                                    {/* {message.thinkingApiLimited && (
                                                         <Lock className="h-3 w-3 text-muted-foreground/60 ml-1" />
-                                                    )}
+                                                    )} */}
                                                 </div>
                                             </div>
                                         </div>
