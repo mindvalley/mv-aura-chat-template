@@ -10,6 +10,8 @@ export interface Message {
   isStreaming?: boolean;
   streamingType?: "thinking" | "response";
   hasThinkingContent?: boolean;
+  thinkingStartTime?: Date;
+  thinkingDuration?: number; // in seconds
 }
 
 export interface ThinkingModeState {

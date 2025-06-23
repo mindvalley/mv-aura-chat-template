@@ -160,6 +160,7 @@ export function ChatInterface({ currentAssistant }: ChatInterfaceProps) {
 
     if (hasThinking) {
       // Start with thinking phase
+      const thinkingStartTime = new Date()
       const thinkingMessage: Message = {
         id: assistantMessageId,
         role: "assistant",
@@ -170,6 +171,7 @@ export function ChatInterface({ currentAssistant }: ChatInterfaceProps) {
         isStreaming: true,
         streamingType: "thinking",
         hasThinkingContent: true,
+        thinkingStartTime: thinkingStartTime,
       }
       setMessages((prev) => [...prev, thinkingMessage])
 
@@ -194,6 +196,10 @@ This appears to be a request that I should handle with care and attention to det
           ))
         } else {
           clearInterval(thinkingInterval)
+          // Calculate thinking duration
+          const thinkingEndTime = new Date()
+          const duration = Math.round((thinkingEndTime.getTime() - thinkingStartTime.getTime()) / 1000)
+
           // Switch to response phase
           setTimeout(() => {
             setMessages((prev) => prev.map(msg =>
@@ -202,7 +208,8 @@ This appears to be a request that I should handle with care and attention to det
                   ...msg,
                   isStreaming: true,
                   streamingType: "response" as const,
-                  isThinking: false
+                  isThinking: false,
+                  thinkingDuration: duration
                 }
                 : msg
             ))
@@ -223,15 +230,20 @@ This appears to be a request that I should handle with care and attention to det
                 clearInterval(responseInterval)
                 setMessages((prev) => prev.map(msg =>
                   msg.id === assistantMessageId
-                    ? { ...msg, isStreaming: false }
+                    ? {
+                      ...msg,
+                      isStreaming: false,
+                      // Ensure duration is set if not already
+                      thinkingDuration: msg.thinkingDuration || duration
+                    }
                     : msg
                 ))
                 setIsTyping(false)
               }
-            }, 50)
-          }, 500)
+            }, 10)
+          }, 100)
         }
-      }, 100)
+      }, 15)
     } else {
       // Standard response without thinking
       setTimeout(() => {
@@ -243,7 +255,7 @@ This appears to be a request that I should handle with care and attention to det
         }
         setMessages((prev) => [...prev, assistantMessage])
         setIsTyping(false)
-      }, 1500)
+      }, 200)
     }
   }
 
@@ -340,12 +352,6 @@ This appears to be a request that I should handle with care and attention to det
           }}
           isInputAtBottom={hasSubmittedMessage}
           isInputAtCenter={!hasSubmittedMessage}
-        />
-        {/* Thinking Mode Toggle */}
-        <ThinkingModeToggle
-          enabled={thinkingEnabled}
-          available={thinkingAvailable}
-          onToggle={setThinkingEnabled}
         />
       </div>
 
@@ -509,71 +515,71 @@ This appears to be a request that I should handle with care and attention to det
 
             {/* Action Buttons (Pills) & File Upload (Plus) now inside the main input bar */}
             <div className="flex flex-col p-2 border-t border-border">
-              {/* Thinking Mode Toggle in Input Area */}
-              {thinkingAvailable && (
-                <div className="mb-2 flex justify-center">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full h-8 w-8"
+                    disabled={isAuraAI && (selectedTool === "kb-search" || selectedTool === "create-image")}
+                  >
+                    <Plus
+                      className={cn(
+                        "h-5 w-5",
+                        isAuraAI && (selectedTool === "kb-search" || selectedTool === "create-image")
+                          ? "text-muted-foreground/40"
+                          : "text-muted-foreground",
+                      )}
+                    />
+                  </Button>
+                  {isAuraAI && (
+                    <>
+                      <Button
+                        variant={selectedTool === "kb-search" ? "default" : "outline"}
+                        size="sm"
+                        className={cn(
+                          "rounded-full h-8 px-3 flex items-center gap-1.5",
+                          selectedTool === "kb-search" ? "bg-primary text-primary-foreground" : "",
+                        )}
+                        onClick={() => handleToolSelect("kb-search")}
+                      >
+                        <Database className="h-4 w-4" />
+                        <span>KB Search</span>
+                      </Button>
+                      <Button
+                        variant={selectedTool === "web-search" ? "default" : "outline"}
+                        size="sm"
+                        className={cn(
+                          "rounded-full h-8 px-3 flex items-center gap-1.5",
+                          selectedTool === "web-search" ? "bg-primary text-primary-foreground" : "",
+                        )}
+                        onClick={() => handleToolSelect("web-search")}
+                      >
+                        <Search className="h-4 w-4" />
+                        <span>Web Search</span>
+                      </Button>
+                      <Button
+                        variant={selectedTool === "create-image" ? "default" : "outline"}
+                        size="sm"
+                        className={cn(
+                          "rounded-full h-8 px-3 flex items-center gap-1.5",
+                          selectedTool === "create-image" ? "bg-primary text-primary-foreground" : "",
+                        )}
+                        onClick={() => handleToolSelect("create-image")}
+                      >
+                        <ImageIcon className="h-4 w-4" />
+                        <span>Create Image</span>
+                      </Button>
+                    </>
+                  )}
+                </div>
+                {/* Thinking Mode Toggle - positioned at the farthest right */}
+                {thinkingAvailable && (
                   <ThinkingModeToggle
                     enabled={thinkingEnabled}
                     available={thinkingAvailable}
                     onToggle={setThinkingEnabled}
                   />
-                </div>
-              )}
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="rounded-full h-8 w-8"
-                  disabled={isAuraAI && (selectedTool === "kb-search" || selectedTool === "create-image")}
-                >
-                  <Plus
-                    className={cn(
-                      "h-5 w-5",
-                      isAuraAI && (selectedTool === "kb-search" || selectedTool === "create-image")
-                        ? "text-muted-foreground/40"
-                        : "text-muted-foreground",
-                    )}
-                  />
-                </Button>
-                {isAuraAI && (
-                  <>
-                    <Button
-                      variant={selectedTool === "kb-search" ? "default" : "outline"}
-                      size="sm"
-                      className={cn(
-                        "rounded-full h-8 px-3 flex items-center gap-1.5",
-                        selectedTool === "kb-search" ? "bg-primary text-primary-foreground" : "",
-                      )}
-                      onClick={() => handleToolSelect("kb-search")}
-                    >
-                      <Database className="h-4 w-4" />
-                      <span>KB Search</span>
-                    </Button>
-                    <Button
-                      variant={selectedTool === "web-search" ? "default" : "outline"}
-                      size="sm"
-                      className={cn(
-                        "rounded-full h-8 px-3 flex items-center gap-1.5",
-                        selectedTool === "web-search" ? "bg-primary text-primary-foreground" : "",
-                      )}
-                      onClick={() => handleToolSelect("web-search")}
-                    >
-                      <Search className="h-4 w-4" />
-                      <span>Web Search</span>
-                    </Button>
-                    <Button
-                      variant={selectedTool === "create-image" ? "default" : "outline"}
-                      size="sm"
-                      className={cn(
-                        "rounded-full h-8 px-3 flex items-center gap-1.5",
-                        selectedTool === "create-image" ? "bg-primary text-primary-foreground" : "",
-                      )}
-                      onClick={() => handleToolSelect("create-image")}
-                    >
-                      <ImageIcon className="h-4 w-4" />
-                      <span>Create Image</span>
-                    </Button>
-                  </>
                 )}
               </div>
             </div>

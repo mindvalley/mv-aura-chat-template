@@ -32,7 +32,14 @@ export function StreamingMessage({
                         className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
                     >
                         <Brain className="h-4 w-4" />
-                        <span>Thinking...</span>
+                        <span>
+                            {message.isStreaming && message.streamingType === "thinking"
+                                ? "Thinking..."
+                                : message.thinkingDuration
+                                    ? `Thought for ${message.thinkingDuration} second${message.thinkingDuration !== 1 ? 's' : ''}`
+                                    : "Thinking..."
+                            }
+                        </span>
                         <ChevronDown
                             className={cn(
                                 "h-4 w-4 transition-transform",

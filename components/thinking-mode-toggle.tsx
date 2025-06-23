@@ -1,5 +1,6 @@
 import { Brain } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface ThinkingModeToggleProps {
     enabled: boolean;
@@ -15,14 +16,26 @@ export function ThinkingModeToggle({
     if (!available) return null;
 
     return (
-        <div className="flex items-center gap-2 px-3 py-2 bg-secondary/50 rounded-lg">
-            <Brain className="h-4 w-4 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">Show thinking</span>
-            <Switch
-                checked={enabled}
-                onCheckedChange={onToggle}
-                className="ml-auto"
+        <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => onToggle(!enabled)}
+            className={cn(
+                "h-8 w-8 rounded-full transition-colors",
+                enabled
+                    ? "bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800"
+                    : "hover:bg-secondary"
+            )}
+            title={enabled ? "Disable thinking mode" : "Enable thinking mode"}
+        >
+            <Brain
+                className={cn(
+                    "h-4 w-4",
+                    enabled
+                        ? "text-blue-600 dark:text-blue-400"
+                        : "text-muted-foreground"
+                )}
             />
-        </div>
+        </Button>
     );
 } 
