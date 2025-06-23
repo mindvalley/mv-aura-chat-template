@@ -11,6 +11,7 @@ interface ThinkingContainerProps {
 
 export function ThinkingContainer({ message }: ThinkingContainerProps) {
     const [isExpanded, setIsExpanded] = useState(false);
+    const [isApiLimitedExpanded, setIsApiLimitedExpanded] = useState(false);
     const scrollContainerRef = useRef<HTMLDivElement>(null);
     const contentRef = useRef<HTMLDivElement>(null);
 
@@ -91,18 +92,37 @@ export function ThinkingContainer({ message }: ThinkingContainerProps) {
                             {/* Thinking Content */}
                             {message.thinkingApiLimited ? (
                                 <div className="px-5 pb-4">
-                                    <div className="p-4 bg-muted/30 rounded-2xl text-sm">
-                                        <div className="flex items-start gap-3 text-muted-foreground">
-                                            <Lock className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                                            <div>
-                                                <p className="font-medium mb-1">Thinking content not available</p>
-                                                <p className="text-xs leading-relaxed opacity-80">
-                                                    This model is actively reasoning through your request, but the thinking process
-                                                    is not accessible through the API due to current limitations.
-                                                </p>
+                                    <Button
+                                        onClick={() => setIsApiLimitedExpanded(!isApiLimitedExpanded)}
+                                        variant="ghost"
+                                        size="sm"
+                                        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-3 p-0 h-auto font-normal"
+                                    >
+                                        <span>{isApiLimitedExpanded ? "Collapse details" : "Expand for details"}</span>
+                                        <ChevronDown
+                                            className={cn(
+                                                "h-4 w-4 transition-transform duration-200",
+                                                isApiLimitedExpanded && "rotate-180"
+                                            )}
+                                        />
+                                    </Button>
+
+                                    <Collapsible open={isApiLimitedExpanded}>
+                                        <CollapsibleContent className="overflow-hidden">
+                                            <div className="p-4 bg-muted/30 rounded-2xl text-sm">
+                                                <div className="flex items-start gap-3 text-muted-foreground">
+                                                    <Lock className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                                                    <div>
+                                                        <p className="font-medium mb-1">Thinking content not available</p>
+                                                        <p className="text-xs leading-relaxed opacity-80">
+                                                            This model is actively reasoning through your request, but the thinking process
+                                                            is not accessible through the API due to current limitations.
+                                                        </p>
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </div>
+                                        </CollapsibleContent>
+                                    </Collapsible>
                                 </div>
                             ) : (
                                 <>
