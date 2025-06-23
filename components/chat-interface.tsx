@@ -24,30 +24,13 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useSidebar } from "@/components/ui/sidebar"
 import { ModelSelector } from "@/components/model-selector/model-selector"
 import { type Model as AIModel, models } from "@/lib/models"
-
-interface Message {
-  id: string
-  role: "user" | "assistant" | "system"
-  content: string
-  timestamp: Date
-  isExperimental?: boolean
-}
-
-interface Assistant {
-  id: string
-  name: string
-  icon: string
-  color: string
-}
+import { ThinkingModeToggle } from "@/components/thinking-mode-toggle"
+import { StreamingMessage } from "@/components/streaming-message"
+import { useThinkingMode } from "@/hooks/use-thinking-mode"
+import { type Message, type Assistant, type ModelCapability } from "@/lib/types"
 
 interface ChatInterfaceProps {
   currentAssistant?: Assistant
-}
-
-interface ModelCapability {
-  id: string
-  name: string
-  icon: React.ReactNode
 }
 
 // SVG icons for providers
@@ -103,6 +86,9 @@ export function ChatInterface({ currentAssistant }: ChatInterfaceProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [selectedTool, setSelectedTool] = useState<"kb-search" | "web-search" | "create-image" | null>(null)
   const [currentModel, setCurrentModel] = useState<AIModel | null>(models[0] || null)
+
+  // Thinking mode state
+  const { thinkingEnabled, thinkingAvailable, setThinkingEnabled } = useThinkingMode(currentModel)
 
   // Default to Aura AI if no current assistant is provided
   const assistant = currentAssistant || {
@@ -166,19 +152,111 @@ export function ChatInterface({ currentAssistant }: ChatInterfaceProps) {
     setMessages((prev) => [...prev, userMessage])
     setMessage("")
 
-    // Simulate assistant typing
+    // Simulate assistant response with thinking mode support
     setIsTyping(true)
-    setTimeout(() => {
-      // Add assistant response
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
+
+    const assistantMessageId = (Date.now() + 1).toString()
+    const hasThinking = thinkingEnabled && thinkingAvailable
+
+    if (hasThinking) {
+      // Start with thinking phase
+      const thinkingStartTime = new Date()
+      const thinkingMessage: Message = {
+        id: assistantMessageId,
         role: "assistant",
-        content: `This is a simulated response from ${assistant.name} using ${currentModel?.name || 'default model'}. In a real application, this would be replaced with an actual response from an AI model.`,
+        content: "",
         timestamp: new Date(),
+        thinkingContent: "",
+        isThinking: true,
+        isStreaming: true,
+        streamingType: "thinking",
+        hasThinkingContent: true,
+        thinkingStartTime: thinkingStartTime,
       }
-      setMessages((prev) => [...prev, assistantMessage])
-      setIsTyping(false)
-    }, 1500)
+      setMessages((prev) => [...prev, thinkingMessage])
+
+      // Simulate thinking content streaming
+      let thinkingText = ""
+      const fullThinkingText = `I need to analyze this request carefully. Let me think through this step by step:
+
+1. First, I should understand what the user is asking for
+2. Consider the context and any relevant information
+3. Think about the best approach to provide a helpful response
+4. Structure my response clearly and comprehensively
+
+This appears to be a request that I should handle with care and attention to detail.`
+
+      const thinkingInterval = setInterval(() => {
+        if (thinkingText.length < fullThinkingText.length) {
+          thinkingText += fullThinkingText[thinkingText.length]
+          setMessages((prev) => prev.map(msg =>
+            msg.id === assistantMessageId
+              ? { ...msg, thinkingContent: thinkingText }
+              : msg
+          ))
+        } else {
+          clearInterval(thinkingInterval)
+          // Calculate thinking duration
+          const thinkingEndTime = new Date()
+          const duration = Math.round((thinkingEndTime.getTime() - thinkingStartTime.getTime()) / 1000)
+
+          // Switch to response phase
+          setTimeout(() => {
+            setMessages((prev) => prev.map(msg =>
+              msg.id === assistantMessageId
+                ? {
+                  ...msg,
+                  isStreaming: true,
+                  streamingType: "response" as const,
+                  isThinking: false,
+                  thinkingDuration: duration
+                }
+                : msg
+            ))
+
+            // Simulate response streaming
+            let responseText = ""
+            const fullResponseText = `This is a simulated response from ${assistant.name} using ${currentModel?.name || 'default model'}. Since thinking mode is enabled, you can see my reasoning process above. In a real application, this would be replaced with an actual response from an AI model that supports thinking mode.`
+
+            const responseInterval = setInterval(() => {
+              if (responseText.length < fullResponseText.length) {
+                responseText += fullResponseText[responseText.length]
+                setMessages((prev) => prev.map(msg =>
+                  msg.id === assistantMessageId
+                    ? { ...msg, content: responseText }
+                    : msg
+                ))
+              } else {
+                clearInterval(responseInterval)
+                setMessages((prev) => prev.map(msg =>
+                  msg.id === assistantMessageId
+                    ? {
+                      ...msg,
+                      isStreaming: false,
+                      // Ensure duration is set if not already
+                      thinkingDuration: msg.thinkingDuration || duration
+                    }
+                    : msg
+                ))
+                setIsTyping(false)
+              }
+            }, 10)
+          }, 100)
+        }
+      }, 15)
+    } else {
+      // Standard response without thinking
+      setTimeout(() => {
+        const assistantMessage: Message = {
+          id: assistantMessageId,
+          role: "assistant",
+          content: `This is a simulated response from ${assistant.name} using ${currentModel?.name || 'default model'}. In a real application, this would be replaced with an actual response from an AI model.`,
+          timestamp: new Date(),
+        }
+        setMessages((prev) => [...prev, assistantMessage])
+        setIsTyping(false)
+      }, 200)
+    }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -359,14 +437,10 @@ export function ChatInterface({ currentAssistant }: ChatInterfaceProps) {
                   msg.role === "assistant" ? "justify-start" : "justify-end",
                 )}
               >
-                <div
-                  className={cn(
-                    "rounded-lg px-4 py-2 max-w-[80%]",
-                    msg.role === "assistant" ? "bg-secondary" : "bg-primary text-primary-foreground",
-                  )}
-                >
-                  {msg.content}
-                </div>
+                <StreamingMessage
+                  message={msg}
+                  showThinking={thinkingEnabled}
+                />
               </div>
             ))}
             {isTyping && (
@@ -441,61 +515,71 @@ export function ChatInterface({ currentAssistant }: ChatInterfaceProps) {
 
             {/* Action Buttons (Pills) & File Upload (Plus) now inside the main input bar */}
             <div className="flex flex-col p-2 border-t border-border">
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="rounded-full h-8 w-8"
-                  disabled={isAuraAI && (selectedTool === "kb-search" || selectedTool === "create-image")}
-                >
-                  <Plus
-                    className={cn(
-                      "h-5 w-5",
-                      isAuraAI && (selectedTool === "kb-search" || selectedTool === "create-image")
-                        ? "text-muted-foreground/40"
-                        : "text-muted-foreground",
-                    )}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full h-8 w-8"
+                    disabled={isAuraAI && (selectedTool === "kb-search" || selectedTool === "create-image")}
+                  >
+                    <Plus
+                      className={cn(
+                        "h-5 w-5",
+                        isAuraAI && (selectedTool === "kb-search" || selectedTool === "create-image")
+                          ? "text-muted-foreground/40"
+                          : "text-muted-foreground",
+                      )}
+                    />
+                  </Button>
+                  {isAuraAI && (
+                    <>
+                      <Button
+                        variant={selectedTool === "kb-search" ? "default" : "outline"}
+                        size="sm"
+                        className={cn(
+                          "rounded-full h-8 px-3 flex items-center gap-1.5",
+                          selectedTool === "kb-search" ? "bg-primary text-primary-foreground" : "",
+                        )}
+                        onClick={() => handleToolSelect("kb-search")}
+                      >
+                        <Database className="h-4 w-4" />
+                        <span>KB Search</span>
+                      </Button>
+                      <Button
+                        variant={selectedTool === "web-search" ? "default" : "outline"}
+                        size="sm"
+                        className={cn(
+                          "rounded-full h-8 px-3 flex items-center gap-1.5",
+                          selectedTool === "web-search" ? "bg-primary text-primary-foreground" : "",
+                        )}
+                        onClick={() => handleToolSelect("web-search")}
+                      >
+                        <Search className="h-4 w-4" />
+                        <span>Web Search</span>
+                      </Button>
+                      <Button
+                        variant={selectedTool === "create-image" ? "default" : "outline"}
+                        size="sm"
+                        className={cn(
+                          "rounded-full h-8 px-3 flex items-center gap-1.5",
+                          selectedTool === "create-image" ? "bg-primary text-primary-foreground" : "",
+                        )}
+                        onClick={() => handleToolSelect("create-image")}
+                      >
+                        <ImageIcon className="h-4 w-4" />
+                        <span>Create Image</span>
+                      </Button>
+                    </>
+                  )}
+                </div>
+                {/* Thinking Mode Toggle - positioned at the farthest right */}
+                {thinkingAvailable && (
+                  <ThinkingModeToggle
+                    enabled={thinkingEnabled}
+                    available={thinkingAvailable}
+                    onToggle={setThinkingEnabled}
                   />
-                </Button>
-                {isAuraAI && (
-                  <>
-                    <Button
-                      variant={selectedTool === "kb-search" ? "default" : "outline"}
-                      size="sm"
-                      className={cn(
-                        "rounded-full h-8 px-3 flex items-center gap-1.5",
-                        selectedTool === "kb-search" ? "bg-primary text-primary-foreground" : "",
-                      )}
-                      onClick={() => handleToolSelect("kb-search")}
-                    >
-                      <Database className="h-4 w-4" />
-                      <span>KB Search</span>
-                    </Button>
-                    <Button
-                      variant={selectedTool === "web-search" ? "default" : "outline"}
-                      size="sm"
-                      className={cn(
-                        "rounded-full h-8 px-3 flex items-center gap-1.5",
-                        selectedTool === "web-search" ? "bg-primary text-primary-foreground" : "",
-                      )}
-                      onClick={() => handleToolSelect("web-search")}
-                    >
-                      <Search className="h-4 w-4" />
-                      <span>Web Search</span>
-                    </Button>
-                    <Button
-                      variant={selectedTool === "create-image" ? "default" : "outline"}
-                      size="sm"
-                      className={cn(
-                        "rounded-full h-8 px-3 flex items-center gap-1.5",
-                        selectedTool === "create-image" ? "bg-primary text-primary-foreground" : "",
-                      )}
-                      onClick={() => handleToolSelect("create-image")}
-                    >
-                      <ImageIcon className="h-4 w-4" />
-                      <span>Create Image</span>
-                    </Button>
-                  </>
                 )}
               </div>
             </div>
