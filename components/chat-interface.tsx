@@ -538,49 +538,54 @@ This appears to be a request that I should handle with care and attention to det
                         variant={selectedTool === "kb-search" ? "default" : "outline"}
                         size="sm"
                         className={cn(
-                          "rounded-full h-8 px-3 flex items-center gap-1.5",
+                          "rounded-full h-8 px-2 flex items-center gap-1.5",
+                          open ? "lg:px-3" : "md:px-3",
                           selectedTool === "kb-search" ? "bg-primary text-primary-foreground" : "",
                         )}
                         onClick={() => handleToolSelect("kb-search")}
                       >
                         <Database className="h-4 w-4" />
-                        <span>KB Search</span>
+                        <span className={cn("hidden", open ? "lg:inline" : "md:inline")}>KB Search</span>
                       </Button>
                       <Button
                         variant={selectedTool === "web-search" ? "default" : "outline"}
                         size="sm"
                         className={cn(
-                          "rounded-full h-8 px-3 flex items-center gap-1.5",
+                          "rounded-full h-8 px-2 flex items-center gap-1.5",
+                          open ? "lg:px-3" : "md:px-3",
                           selectedTool === "web-search" ? "bg-primary text-primary-foreground" : "",
                         )}
                         onClick={() => handleToolSelect("web-search")}
                       >
                         <Search className="h-4 w-4" />
-                        <span>Web Search</span>
+                        <span className={cn("hidden", open ? "lg:inline" : "md:inline")}>Web Search</span>
                       </Button>
                       <Button
                         variant={selectedTool === "create-image" ? "default" : "outline"}
                         size="sm"
                         className={cn(
-                          "rounded-full h-8 px-3 flex items-center gap-1.5",
+                          "rounded-full h-8 px-2 flex items-center gap-1.5",
+                          open ? "lg:px-3" : "md:px-3",
                           selectedTool === "create-image" ? "bg-primary text-primary-foreground" : "",
                         )}
                         onClick={() => handleToolSelect("create-image")}
                       >
                         <ImageIcon className="h-4 w-4" />
-                        <span>Create Image</span>
+                        <span className={cn("hidden", open ? "lg:inline" : "md:inline")}>Create Image</span>
                       </Button>
                     </>
                   )}
+                  {/* Thinking Mode Toggle - positioned with other action buttons */}
+                  {thinkingAvailable && (
+                    <ThinkingModeToggle
+                      enabled={thinkingEnabled}
+                      available={thinkingAvailable}
+                      onToggle={setThinkingEnabled}
+                      className={open ? "lg:px-3" : "md:px-3"}
+                      textClassName={cn("hidden", open ? "lg:inline" : "md:inline")}
+                    />
+                  )}
                 </div>
-                {/* Thinking Mode Toggle - positioned at the farthest right */}
-                {thinkingAvailable && (
-                  <ThinkingModeToggle
-                    enabled={thinkingEnabled}
-                    available={thinkingAvailable}
-                    onToggle={setThinkingEnabled}
-                  />
-                )}
               </div>
             </div>
           </div>
