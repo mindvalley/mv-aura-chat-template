@@ -1,4 +1,4 @@
-import { Brain } from "lucide-react";
+import { Lightbulb, LightbulbOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -6,36 +6,46 @@ interface ThinkingModeToggleProps {
     enabled: boolean;
     available: boolean;
     onToggle: (enabled: boolean) => void;
+    className?: string;
+    textClassName?: string;
 }
 
 export function ThinkingModeToggle({
     enabled,
     available,
     onToggle,
+    className,
+    textClassName,
 }: ThinkingModeToggleProps) {
     if (!available) return null;
 
+    const IconComponent = enabled ? Lightbulb : LightbulbOff;
+
     return (
         <Button
-            variant="ghost"
-            size="icon"
+            variant="outline"
+            size="sm"
             onClick={() => onToggle(!enabled)}
             className={cn(
-                "h-8 w-8 rounded-full transition-colors",
-                enabled
-                    ? "bg-blue-100 hover:bg-blue-200 dark:bg-blue-900 dark:hover:bg-blue-800"
-                    : "hover:bg-secondary"
+                "rounded-full h-8 px-2 flex items-center gap-1.5 transition-all duration-200 hover:bg-accent",
+                className
             )}
             title={enabled ? "Disable thinking mode" : "Enable thinking mode"}
         >
-            <Brain
+            <IconComponent
                 className={cn(
-                    "h-4 w-4",
+                    "h-4 w-4 transition-all duration-200",
                     enabled
-                        ? "text-blue-600 dark:text-blue-400"
+                        ? "text-yellow-400 drop-shadow-sm"
                         : "text-muted-foreground"
                 )}
             />
+            <span className={cn(
+                "text-sm font-medium text-foreground transition-colors duration-200",
+                textClassName
+            )}>
+                Thinking
+            </span>
         </Button>
     );
 } 
