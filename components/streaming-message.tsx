@@ -1,8 +1,6 @@
-import { useState } from "react";
-import { Brain, ChevronDown } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible";
 import { type Message } from "@/lib/types";
+import { cn } from "@/lib/utils";
+
 
 interface StreamingMessageProps {
     message: Message;
@@ -13,8 +11,6 @@ export function StreamingMessage({
     message,
     showThinking,
 }: StreamingMessageProps) {
-    const [isThinkingExpanded, setIsThinkingExpanded] = useState(false);
-
     return (
         <div
             className={cn(
@@ -24,44 +20,6 @@ export function StreamingMessage({
                     : "bg-primary text-primary-foreground"
             )}
         >
-            {/* Thinking Section */}
-            {message.hasThinkingContent && showThinking && (
-                <div className="mb-3 border-b border-border pb-3">
-                    <button
-                        onClick={() => setIsThinkingExpanded(!isThinkingExpanded)}
-                        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                        <Brain className="h-4 w-4" />
-                        <span>
-                            {message.isStreaming && message.streamingType === "thinking"
-                                ? "Thinking..."
-                                : message.thinkingDuration
-                                    ? `Thought for ${message.thinkingDuration} second${message.thinkingDuration !== 1 ? 's' : ''}`
-                                    : "Thinking..."
-                            }
-                        </span>
-                        <ChevronDown
-                            className={cn(
-                                "h-4 w-4 transition-transform",
-                                isThinkingExpanded && "rotate-180"
-                            )}
-                        />
-                    </button>
-
-                    <Collapsible open={isThinkingExpanded}>
-                        <CollapsibleContent className="mt-2 p-3 bg-muted/50 rounded text-sm font-mono">
-                            <div className="whitespace-pre-wrap">
-                                {message.thinkingContent}
-                                {message.isStreaming &&
-                                    message.streamingType === "thinking" && (
-                                        <span className="inline-block w-2 h-4 bg-current animate-pulse ml-1" />
-                                    )}
-                            </div>
-                        </CollapsibleContent>
-                    </Collapsible>
-                </div>
-            )}
-
             {/* Response Content */}
             <div className="whitespace-pre-wrap">
                 {message.content}

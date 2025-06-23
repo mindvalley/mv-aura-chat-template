@@ -26,6 +26,8 @@ import { ModelSelector } from "@/components/model-selector/model-selector"
 import { type Model as AIModel, models } from "@/lib/models"
 import { ThinkingModeToggle } from "@/components/thinking-mode-toggle"
 import { StreamingMessage } from "@/components/streaming-message"
+import { ThinkingContainer } from "@/components/thinking-container"
+
 import { useThinkingMode } from "@/hooks/use-thinking-mode"
 import { type Message, type Assistant, type ModelCapability } from "@/lib/types"
 
@@ -172,12 +174,61 @@ export function ChatInterface({ currentAssistant }: ChatInterfaceProps) {
         streamingType: "thinking",
         hasThinkingContent: true,
         thinkingStartTime: thinkingStartTime,
+        thinkingApiLimited: currentModel?.thinkingApiLimited || false,
       }
       setMessages((prev) => [...prev, thinkingMessage])
 
-      // Simulate thinking content streaming
-      let thinkingText = ""
-      const fullThinkingText = `I need to analyze this request carefully. Let me think through this step by step:
+      // Handle thinking simulation based on API limitations
+      if (currentModel?.thinkingApiLimited) {
+        // For API-limited models, simulate thinking time but don't show content
+        setTimeout(() => {
+          const thinkingEndTime = new Date()
+          const duration = Math.round((thinkingEndTime.getTime() - thinkingStartTime.getTime()) / 1000)
+
+          // Switch to response phase
+          setMessages((prev) => prev.map(msg =>
+            msg.id === assistantMessageId
+              ? {
+                ...msg,
+                isStreaming: true,
+                streamingType: "response" as const,
+                isThinking: false,
+                thinkingDuration: duration
+              }
+              : msg
+          ))
+
+          // Simulate response streaming
+          let responseText = ""
+          const fullResponseText = `This is a simulated response from ${assistant.name} using ${currentModel?.name || 'default model'}. This model uses advanced reasoning capabilities, but the thinking process is not accessible through the API. The response you're seeing is the result of the model's internal reasoning.`
+
+          const responseInterval = setInterval(() => {
+            if (responseText.length < fullResponseText.length) {
+              responseText += fullResponseText[responseText.length]
+              setMessages((prev) => prev.map(msg =>
+                msg.id === assistantMessageId
+                  ? { ...msg, content: responseText }
+                  : msg
+              ))
+            } else {
+              clearInterval(responseInterval)
+              setMessages((prev) => prev.map(msg =>
+                msg.id === assistantMessageId
+                  ? {
+                    ...msg,
+                    isStreaming: false,
+                    thinkingDuration: duration
+                  }
+                  : msg
+              ))
+              setIsTyping(false)
+            }
+          }, 10)
+        }, 2000) // Simulate 2 seconds of thinking time
+      } else {
+        // For non-API-limited models, show actual thinking content
+        let thinkingText = ""
+        const fullThinkingText = `I need to analyze this request carefully. Let me think through this step by step:
 
 1. First, I should understand what the user is asking for
 2. Consider the context and any relevant information
@@ -186,64 +237,64 @@ export function ChatInterface({ currentAssistant }: ChatInterfaceProps) {
 
 This appears to be a request that I should handle with care and attention to detail.`
 
-      const thinkingInterval = setInterval(() => {
-        if (thinkingText.length < fullThinkingText.length) {
-          thinkingText += fullThinkingText[thinkingText.length]
-          setMessages((prev) => prev.map(msg =>
-            msg.id === assistantMessageId
-              ? { ...msg, thinkingContent: thinkingText }
-              : msg
-          ))
-        } else {
-          clearInterval(thinkingInterval)
-          // Calculate thinking duration
-          const thinkingEndTime = new Date()
-          const duration = Math.round((thinkingEndTime.getTime() - thinkingStartTime.getTime()) / 1000)
-
-          // Switch to response phase
-          setTimeout(() => {
+        const thinkingInterval = setInterval(() => {
+          if (thinkingText.length < fullThinkingText.length) {
+            thinkingText += fullThinkingText[thinkingText.length]
             setMessages((prev) => prev.map(msg =>
               msg.id === assistantMessageId
-                ? {
-                  ...msg,
-                  isStreaming: true,
-                  streamingType: "response" as const,
-                  isThinking: false,
-                  thinkingDuration: duration
-                }
+                ? { ...msg, thinkingContent: thinkingText }
                 : msg
             ))
+          } else {
+            clearInterval(thinkingInterval)
+            // Calculate thinking duration
+            const thinkingEndTime = new Date()
+            const duration = Math.round((thinkingEndTime.getTime() - thinkingStartTime.getTime()) / 1000)
 
-            // Simulate response streaming
-            let responseText = ""
-            const fullResponseText = `This is a simulated response from ${assistant.name} using ${currentModel?.name || 'default model'}. Since thinking mode is enabled, you can see my reasoning process above. In a real application, this would be replaced with an actual response from an AI model that supports thinking mode.`
+            // Switch to response phase
+            setTimeout(() => {
+              setMessages((prev) => prev.map(msg =>
+                msg.id === assistantMessageId
+                  ? {
+                    ...msg,
+                    isStreaming: true,
+                    streamingType: "response" as const,
+                    isThinking: false,
+                    thinkingDuration: duration
+                  }
+                  : msg
+              ))
 
-            const responseInterval = setInterval(() => {
-              if (responseText.length < fullResponseText.length) {
-                responseText += fullResponseText[responseText.length]
-                setMessages((prev) => prev.map(msg =>
-                  msg.id === assistantMessageId
-                    ? { ...msg, content: responseText }
-                    : msg
-                ))
-              } else {
-                clearInterval(responseInterval)
-                setMessages((prev) => prev.map(msg =>
-                  msg.id === assistantMessageId
-                    ? {
-                      ...msg,
-                      isStreaming: false,
-                      // Ensure duration is set if not already
-                      thinkingDuration: msg.thinkingDuration || duration
-                    }
-                    : msg
-                ))
-                setIsTyping(false)
-              }
-            }, 10)
-          }, 100)
-        }
-      }, 15)
+              // Simulate response streaming
+              let responseText = ""
+              const fullResponseText = `This is a simulated response from ${assistant.name} using ${currentModel?.name || 'default model'}. Since thinking mode is enabled, you can see my reasoning process above. In a real application, this would be replaced with an actual response from an AI model that supports thinking mode.`
+
+              const responseInterval = setInterval(() => {
+                if (responseText.length < fullResponseText.length) {
+                  responseText += fullResponseText[responseText.length]
+                  setMessages((prev) => prev.map(msg =>
+                    msg.id === assistantMessageId
+                      ? { ...msg, content: responseText }
+                      : msg
+                  ))
+                } else {
+                  clearInterval(responseInterval)
+                  setMessages((prev) => prev.map(msg =>
+                    msg.id === assistantMessageId
+                      ? {
+                        ...msg,
+                        isStreaming: false,
+                        thinkingDuration: duration
+                      }
+                      : msg
+                  ))
+                  setIsTyping(false)
+                }
+              }, 10)
+            }, 100)
+          }
+        }, 15)
+      }
     } else {
       // Standard response without thinking
       setTimeout(() => {
@@ -430,17 +481,24 @@ This appears to be a request that I should handle with care and attention to det
           /* Show messages when conversation has started */
           <>
             {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={cn(
-                  "flex max-w-3xl mx-auto w-full",
-                  msg.role === "assistant" ? "justify-start" : "justify-end",
+              <div key={msg.id}>
+                {/* Thinking Container - Separate from message */}
+                {msg.role === "assistant" && msg.hasThinkingContent && thinkingEnabled && (
+                  <ThinkingContainer message={msg} />
                 )}
-              >
-                <StreamingMessage
-                  message={msg}
-                  showThinking={thinkingEnabled}
-                />
+
+                {/* Message Container */}
+                <div
+                  className={cn(
+                    "flex max-w-3xl mx-auto w-full",
+                    msg.role === "assistant" ? "justify-start" : "justify-end",
+                  )}
+                >
+                  <StreamingMessage
+                    message={msg}
+                    showThinking={thinkingEnabled}
+                  />
+                </div>
               </div>
             ))}
             {isTyping && (
@@ -538,49 +596,55 @@ This appears to be a request that I should handle with care and attention to det
                         variant={selectedTool === "kb-search" ? "default" : "outline"}
                         size="sm"
                         className={cn(
-                          "rounded-full h-8 px-3 flex items-center gap-1.5",
+                          "rounded-full h-8 px-2 flex items-center gap-1.5",
+                          open ? "lg:px-3" : "md:px-3",
+
                           selectedTool === "kb-search" ? "bg-primary text-primary-foreground" : "",
                         )}
                         onClick={() => handleToolSelect("kb-search")}
                       >
                         <Database className="h-4 w-4" />
-                        <span>KB Search</span>
+                        <span className={cn("hidden", open ? "lg:inline" : "md:inline")}>KB Search</span>
                       </Button>
                       <Button
                         variant={selectedTool === "web-search" ? "default" : "outline"}
                         size="sm"
                         className={cn(
-                          "rounded-full h-8 px-3 flex items-center gap-1.5",
+                          "rounded-full h-8 px-2 flex items-center gap-1.5",
+                          open ? "lg:px-3" : "md:px-3",
                           selectedTool === "web-search" ? "bg-primary text-primary-foreground" : "",
                         )}
                         onClick={() => handleToolSelect("web-search")}
                       >
                         <Search className="h-4 w-4" />
-                        <span>Web Search</span>
+                        <span className={cn("hidden", open ? "lg:inline" : "md:inline")}>Web Search</span>
                       </Button>
                       <Button
                         variant={selectedTool === "create-image" ? "default" : "outline"}
                         size="sm"
                         className={cn(
-                          "rounded-full h-8 px-3 flex items-center gap-1.5",
+                          "rounded-full h-8 px-2 flex items-center gap-1.5",
+                          open ? "lg:px-3" : "md:px-3",
                           selectedTool === "create-image" ? "bg-primary text-primary-foreground" : "",
                         )}
                         onClick={() => handleToolSelect("create-image")}
                       >
                         <ImageIcon className="h-4 w-4" />
-                        <span>Create Image</span>
+                        <span className={cn("hidden", open ? "lg:inline" : "md:inline")}>Create Image</span>
                       </Button>
                     </>
                   )}
+                  {/* Thinking Mode Toggle - positioned with other action buttons */}
+                  {thinkingAvailable && (
+                    <ThinkingModeToggle
+                      enabled={thinkingEnabled}
+                      available={thinkingAvailable}
+                      onToggle={setThinkingEnabled}
+                      className={open ? "lg:px-3" : "md:px-3"}
+                      textClassName={cn("hidden", open ? "lg:inline" : "md:inline")}
+                    />
+                  )}
                 </div>
-                {/* Thinking Mode Toggle - positioned at the farthest right */}
-                {thinkingAvailable && (
-                  <ThinkingModeToggle
-                    enabled={thinkingEnabled}
-                    available={thinkingAvailable}
-                    onToggle={setThinkingEnabled}
-                  />
-                )}
               </div>
             </div>
           </div>

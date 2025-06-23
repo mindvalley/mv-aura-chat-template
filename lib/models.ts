@@ -20,6 +20,7 @@ export interface Model {
   intelligence: number; // 1-10
   contextLength: string;
   thinkingSupported: boolean;
+  thinkingApiLimited?: boolean; // true if model thinks but API doesn't expose thinking content
   supportedInputs: string[];
   bestFor: string[];
   isPro?: boolean;
@@ -57,8 +58,8 @@ export const models: Model[] = [
     icon: Zap,
   },
   {
-    id: "o1-preview",
-    name: "o1-preview",
+    id: "o3-mini",
+    name: "o3-mini",
     provider: "OpenAI",
     description:
       "Advanced reasoning model that thinks step-by-step for complex problems.",
@@ -66,6 +67,7 @@ export const models: Model[] = [
     intelligence: 10,
     contextLength: "32K tokens",
     thinkingSupported: true,
+    thinkingApiLimited: true,
     supportedInputs: ["text"],
     bestFor: ["Math", "Science", "Complex reasoning"],
     isPro: true,
@@ -109,7 +111,7 @@ export const models: Model[] = [
     speed: 8,
     intelligence: 8,
     contextLength: "1M tokens",
-    thinkingSupported: false,
+    thinkingSupported: true,
     supportedInputs: ["text", "image", "video", "audio"],
     bestFor: ["Multimodal tasks", "Long context", "Research"],
     icon: Star,

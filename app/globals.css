@@ -68,6 +68,65 @@
   }
 }
 
+/* Thinking Container Styles */
+@layer components {
+  .message-bubble {
+    @apply bg-card/80 backdrop-blur-sm border border-border/30 shadow-lg;
+  }
+
+  .thinking-container {
+    @apply relative;
+  }
+
+  .loading-gradient-text {
+    background: linear-gradient(90deg, 
+      hsl(var(--foreground)) 0%, 
+      hsl(var(--primary)) 50%, 
+      hsl(var(--foreground)) 100%
+    );
+    background-size: 200% 100%;
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shimmer 2s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: -200% 0;
+    }
+    100% {
+      background-position: 200% 0;
+    }
+  }
+
+  .fade-mask {
+    mask-image: linear-gradient(to bottom, 
+      transparent 0%, 
+      black 15%, 
+      black 85%, 
+      transparent 100%
+    );
+    -webkit-mask-image: linear-gradient(to bottom, 
+      transparent 0%, 
+      black 15%, 
+      black 85%, 
+      transparent 100%
+    );
+  }
+
+  .thinking-content-line {
+    transform: translateY(0);
+    opacity: 1;
+    transition: all 0.3s ease-out;
+  }
+
+  .thinking-content-line.fade-out {
+    transform: translateY(-10px);
+    opacity: 0;
+  }
+}
+
 /* Custom scrollbar */
 .overflow-y-auto::-webkit-scrollbar {
   width: 6px;
